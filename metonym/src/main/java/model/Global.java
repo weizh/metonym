@@ -36,6 +36,8 @@ public class Global {
 
 	public static final String P1END = "[P1END]",P2END = "[P2END]",P3END = "[P3END]",N1END = "[N1END]",N2END = "[N2END]",N3END = "[N3END]";
 
+	public static final String FREL = "[FREL]", FHEAD="[FHEAD]",FREL2 = "[FREL2]", FHEAD2="[FHEAD2]";
+
 	public static String P_CC = "CC", P_CD = "CD", P_DT = "DT", P_EX = "EX", P_FW = "FW", P_IN = "IN", P_JJ = "JJ",
 			P_JJR = "JJR", P_JJS = "JJS", P_LS = "LS", P_MD = "MD", P_NN = "NN", P_NNS = "NNS", P_NNP = "NNP", P_NNPS = "NNPS",
 			P_PDT = "PDT", P_POS = "POS", P_PRP = "PRP", P_PRP$ = "PRP$", P_RB = "RB", P_RBR = "RBR", P_RBS = "RBS", P_RP = "RP",

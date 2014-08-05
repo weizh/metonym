@@ -62,4 +62,9 @@ public class NamedEntity extends Phrase {
 		// TODO Auto-generated method stub
 		return super.getPOS();
 	}
+
+	public Word getLastWord() {
+		// TODO Auto-generated method stub
+		return super.sent.wordAt(super.end);
+	}
 }

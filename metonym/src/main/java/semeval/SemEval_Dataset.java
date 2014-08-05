@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import stanfordnlp.PipeLineAnnotate;
+import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
@@ -77,7 +78,10 @@ public class SemEval_Dataset extends DataSet {
 				for (CoreLabel token : sent.get(TokensAnnotation.class)) {
 					int b = token.beginPosition(), e = token.endPosition();
 					Word word = new Word(token.getString(TextAnnotation.class), b, e, token.index());
+					word.setPOS(token.get(CoreAnnotations.PartOfSpeechAnnotation.class));
+					word.setLemma(token.get(CoreAnnotations.LemmaAnnotation.class));
 					words.add(word);
+					
 					if (b >= s.getE_start() && e <= s.getE_end()) {
 						if (eTokenStart == -1)
 							eTokenStart = tokenCount;
@@ -97,7 +101,11 @@ public class SemEval_Dataset extends DataSet {
 					IndexedWord tgt = sge.getTarget();
 					GrammaticalRelation rel = sge.getRelation();
 					Word srcw = new Word(src.get(TextAnnotation.class), src.beginPosition(), src.endPosition(), src.index());
+					srcw.setLemma(src.lemma());
+					srcw.setPOS(src.get(CoreAnnotations.PartOfSpeechAnnotation.class));
 					Word tgtw = new Word(tgt.get(TextAnnotation.class), tgt.beginPosition(), tgt.endPosition(), tgt.index());
+					tgtw.setLemma(tgt.lemma());
+					tgtw.setPOS(tgt.get(CoreAnnotations.PartOfSpeechAnnotation.class));
 					Dependency p = new Dependency(sentence, srcw, tgtw, rel.getLongName());
 					sentence.addDependency(p);
 				}

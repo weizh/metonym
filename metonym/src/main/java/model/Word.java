@@ -6,6 +6,16 @@ public class Word implements Serializable {
 
 	String word;
 
+	String lemma;
+	
+	public String getLemma() {
+		return lemma;
+	}
+
+	public void setLemma(String lemma) {
+		this.lemma = lemma;
+	}
+
 	int start, end;
 	int wordid;
 
@@ -50,10 +60,6 @@ public class Word implements Serializable {
 		this.wordid = wordid;
 	}
 
-	public String getPredition() {
-		return predition;
-	}
-
 	public void setPredition(String predition) {
 		this.predition = predition;
 	}
@@ -66,9 +72,6 @@ public class Word implements Serializable {
 		this.folds = folds;
 	}
 
-	public String getPos() {
-		return pos;
-	}
 
 	public String getWord() {
 		return word;
@@ -78,21 +81,29 @@ public class Word implements Serializable {
 		this.word = word;
 	}
 
-	public String getLemma() {
-		return word.trim().toLowerCase();
-	}
-
 	public String getPOS() {
 		return pos;
 	}
 
-	public void setPos(String pos) {
+	public void setPOS(String pos) {
 		this.pos = pos;
 	}
 
 	public String toString() {
 		return word;
 
+	}
+	public boolean equals(Object w){
+		if ((w instanceof Word) ==false)
+			return false;
+		Word tword = (Word) w;
+		if (tword.getStart()!=this.start)
+			return false;
+		if (tword.getEnd()!=this.end)
+			return false;
+		if (!tword.getWord().equals(this.getWord()))
+				return false;
+		return true;
 	}
 
 	public String getCap() {

@@ -10,7 +10,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import semeval.SemEval_Dataset;
 
@@ -30,8 +34,9 @@ public class SVM_Trainer implements Serializable {
 	svm_model model;
 	svm_parameter p;
 	FeatureExtractor fe;
-	TObjectIntMap<String> dic;
+
 	TObjectIntMap<String> labelTypes;
+	int labelId;
 	ArrayList<String> labelArray;
 
 	public FeatureExtractor getFe() {
@@ -45,20 +50,20 @@ public class SVM_Trainer implements Serializable {
 	void setDefaultSVMParam() {
 		p = new svm_parameter();
 		p.svm_type = svm_parameter.C_SVC;
-		p.kernel_type = svm_parameter.RBF;
+		p.kernel_type = svm_parameter.LINEAR;
 		p.degree = 3;
-		p.gamma = 0.5; // 1/k
+		p.gamma = 0.1; // 1/k
 		p.coef0 = 0;
 		p.nu = 0.5;
-		p.cache_size = 40;
+		p.cache_size = 100;
 		p.C = 1;
 		p.eps = 1e-3;
 		p.p = 0.1;
 		p.shrinking = 1;
 		p.nr_weight = 0;
-		p.weight_label = new int[0];
+		p.weight_label = new int[3];
 		p.weight = new double[3];
-		p.probability = 1;
+		p.probability = 0;
 	}
 
 	public SVM_Trainer() {
@@ -68,12 +73,16 @@ public class SVM_Trainer implements Serializable {
 	public SVM_Trainer(FeatureExtractor featureExtractor) {
 		setDefaultSVMParam();
 		this.fe = featureExtractor;
+		this.labelTypes = new TObjectIntHashMap<String>();
+		this.labelArray = new ArrayList<String>();
 	}
 
-	public void train(SemEval_Dataset semevaltrain) {
+	public void train(SemEval_Dataset semevaltrain) throws Exception {
 
-		List<ArrayList<Feature>> featureMatrix = new ArrayList<ArrayList<Feature>>();
 		List<String> labels = new ArrayList<String>();
+		
+		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltrain.getDocuments());
+
 		for (Document doc : semevaltrain.getDocuments()) {
 			List<Sentence> sents = doc.getParagraphs().get(0).getSentences();
 			for (Sentence sent : sents) {
@@ -81,32 +90,14 @@ public class SVM_Trainer implements Serializable {
 				if (nes.size() != 0) {
 					for (NamedEntity ne : nes) {
 						labels.add(ne.getEntityType());
+						if (!labelTypes.containsKey(ne.getEntityType()))
+						{
+							labelTypes.put(ne.getEntityType(), labelId++);
+							labelArray.add(ne.getEntityType());
+						}
+						
 					}
 				}
-			}
-			ArrayList<Feature> docFeature = fe.extract(doc);
-			featureMatrix.add(docFeature);
-		}
-
-		dic = new TObjectIntHashMap<String>();
-		labelTypes = new TObjectIntHashMap<String>();
-		labelArray = new ArrayList<String>();
-
-		int dicId = 0;
-		int typeId = 0;
-
-		for (ArrayList<Feature> featureArray : featureMatrix) {
-			for (Feature f : featureArray) {
-				String s = f.getStringWithHeader();
-				if (!dic.containsKey(s))
-					dic.put(s, dicId++);
-			}
-		}
-
-		for (String label : labels) {
-			if (!labelTypes.containsKey(label)) {
-				labelTypes.put(label, typeId++);
-				labelArray.add(label);
 			}
 		}
 
@@ -116,9 +107,10 @@ public class SVM_Trainer implements Serializable {
 		problem.y = new double[problem.l];
 
 		for (int i = 0; i < problem.l; i++) {
-
-			ArrayList<Feature> features = featureMatrix.get(i);
-			problem.x[i] = oneHotCoding(features, dic);
+			ArrayList<svm_node> ar = featureMatrix.get(i);
+			for (int j = 0 ; j < ar.size();j++)
+				ar.get(j).index=j;
+			problem.x[i] = ar.toArray(new svm_node[] {});
 			problem.y[i] = labelTypes.get(labels.get(i));
 		}
 
@@ -126,63 +118,81 @@ public class SVM_Trainer implements Serializable {
 
 	}
 
-	public void test(SemEval_Dataset semevaltest) {
+	public void test(SemEval_Dataset semevaltest) throws Exception {
 
-		List<ArrayList<Feature>> featureMatrix = new ArrayList<ArrayList<Feature>>();
-		
+		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltest.getDocuments());
+
 		ArrayList<String> labels = new ArrayList<String>();
-		
+
 		for (Document doc : semevaltest.getDocuments()) {
 			// System.out.println("<<<<<<<<<<<<<" + doc.getDocId());
-			for (Sentence sent : doc.getParagraphs().get(0).getSentences()){
-				if (sent.getEntities().size()!=0 )
+			for (Sentence sent : doc.getParagraphs().get(0).getSentences()) {
+				if (sent.getEntities().size() != 0)
 					labels.add(sent.getEntities().get(0).getEntityType());
 			}
-			ArrayList<Feature> docFeature = fe.extract(doc);
-			featureMatrix.add(docFeature);
 		}
 
 		ArrayList<String> predictions = new ArrayList<String>();
-		
+
 		for (int i = 0; i < featureMatrix.size(); i++) {
-			ArrayList<Feature> features = featureMatrix.get(i);
-			svm_node[] testfeaturenotes = oneHotCoding(features, dic);
+			svm_node[] testfeaturenotes = featureMatrix.get(i).toArray(new svm_node[]{});
 			double[] arg2 = new double[labelTypes.size()];
 			double label = svm.svm_predict_probability(this.model, testfeaturenotes, arg2);
 			predictions.add(labelArray.get((int) label));
 		}
-		
-		evaluate(labels,predictions);
+
+		evaluate(labels, predictions, semevaltest.getDocuments());
 	}
 
-	private void evaluate(ArrayList<String> labels, ArrayList<String> predictions) {
+	private void evaluate(ArrayList<String> labels, ArrayList<String> predictions, ArrayList<Document> docs) {
 		// TODO Auto-generated method stub
-		double correct = 0;
-		double total = labels.size();
-		for (int i=0; i < labels.size(); i++){
-			if (labels.get(i).equals(predictions.get(i)))
+		double ltotal = 0, mtotal = 0, mixtotal = 0, lpred = 0, mpred = 0, mixpred = 0, lcorrect = 0, mcorrect = 0, mixcorrect = 0;
+		double total = labels.size(), correct = 0;
+		for (int i = 0; i < labels.size(); i++) {
+			if (labels.get(i).equals("literal"))
+				ltotal++;
+			else if (labels.get(i).equals("metonymic"))
+				mtotal++;
+			else if (labels.get(i).equals("mixed"))
+				mixtotal++;
+
+			if (predictions.get(i).equals("literal"))
+				lpred++;
+			else if (predictions.get(i).equals("metonymic"))
+				mpred++;
+			else if (predictions.get(i).equals("mixed"))
+				mixpred++;
+
+			if (labels.get(i).equals(predictions.get(i))) {
 				correct++;
+				if (labels.get(i).equals("literal"))
+					lcorrect++;
+				else if (labels.get(i).equals("metonymic"))
+					mcorrect++;
+				else if (labels.get(i).equals("mixed"))
+					mixcorrect++;
+			} else {
+				List<Sentence> sents = docs.get(i).getParagraphs().get(0).getSentences();
+				for (Sentence sent : sents) {
+					if (sent.getEntities() != null && sent.getEntities().size() != 0) {
+						System.out.println(docs.get(i).getDocId());
+						System.out.println(sent.getPlainSentence());
+						System.out.println("Entity is :  " + sent.getNamedEntities().get(0).getWords());
+						System.out.println(labels.get(i) + " :: " + predictions.get(i));
+					}
+
+				}
+				// System.out.println();
+			}
 		}
-		System.out.println(correct/total);
-	}
+		System.out.println("TOTAL:" + (lcorrect + mcorrect) / (ltotal + mtotal));
+		System.out.printf("Literal: precision: %f, recall: %f, F1: %f\n", lcorrect / lpred, lcorrect / ltotal, 2 * lcorrect
+				/ (lpred + ltotal));
+		System.out.printf("metonymic: precision: %f, recall: %f, F1: %f\n", mcorrect / mpred, mcorrect / mtotal, 2 * mcorrect
+				/ (mpred + mtotal));
+		System.out.printf("mixed: precision: %f, recall: %f, F1: %f\n", mixcorrect / mixpred, mixcorrect / mixtotal, 2
+				* mixcorrect / (mixpred + mixtotal));
 
-	private svm_node[] oneHotCoding(ArrayList<Feature> features, TObjectIntMap<String> dic) {
-
-		svm_node[] nodes = new svm_node[features.size() * dic.size()];
-		for (int i = 0; i < nodes.length; i++) {
-			nodes[i] = new svm_node();
-			nodes[i].index = i;
-			nodes[i].value = 0;
-		}
-
-		int featureindex = 0;
-		for (Feature f : features) {
-			int index = dic.get(f.getStringWithHeader());
-			nodes[featureindex * dic.size() + index].value = 1;
-			featureindex++;
-		}
-
-		return nodes;
 	}
 
 	public static SVM_Trainer load(String file) throws IOException, ClassNotFoundException {
