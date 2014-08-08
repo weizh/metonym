@@ -80,7 +80,7 @@ public class SVM_Trainer implements Serializable {
 	public void train(SemEval_Dataset semevaltrain) throws Exception {
 
 		List<String> labels = new ArrayList<String>();
-		
+
 		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltrain.getDocuments());
 
 		for (Document doc : semevaltrain.getDocuments()) {
@@ -90,12 +90,11 @@ public class SVM_Trainer implements Serializable {
 				if (nes.size() != 0) {
 					for (NamedEntity ne : nes) {
 						labels.add(ne.getEntityType());
-						if (!labelTypes.containsKey(ne.getEntityType()))
-						{
+						if (!labelTypes.containsKey(ne.getEntityType())) {
 							labelTypes.put(ne.getEntityType(), labelId++);
 							labelArray.add(ne.getEntityType());
 						}
-						
+
 					}
 				}
 			}
@@ -108,8 +107,8 @@ public class SVM_Trainer implements Serializable {
 
 		for (int i = 0; i < problem.l; i++) {
 			ArrayList<svm_node> ar = featureMatrix.get(i);
-			for (int j = 0 ; j < ar.size();j++)
-				ar.get(j).index=j;
+			for (int j = 0; j < ar.size(); j++)
+				ar.get(j).index = j;
 			problem.x[i] = ar.toArray(new svm_node[] {});
 			problem.y[i] = labelTypes.get(labels.get(i));
 		}
@@ -120,28 +119,37 @@ public class SVM_Trainer implements Serializable {
 
 	public void test(SemEval_Dataset semevaltest) throws Exception {
 
+		ArrayList<Document> effectiveDoc = new ArrayList<Document>();
 		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltest.getDocuments());
+
+		System.out.println(featureMatrix.size());
 
 		ArrayList<String> labels = new ArrayList<String>();
 
 		for (Document doc : semevaltest.getDocuments()) {
 			// System.out.println("<<<<<<<<<<<<<" + doc.getDocId());
+			boolean hasNE = false;
 			for (Sentence sent : doc.getParagraphs().get(0).getSentences()) {
-				if (sent.getEntities().size() != 0)
+				if (sent.getEntities().size() != 0) {
 					labels.add(sent.getEntities().get(0).getEntityType());
+					hasNE = true;
+				}
 			}
+			if (hasNE)
+				effectiveDoc.add(doc);
 		}
 
 		ArrayList<String> predictions = new ArrayList<String>();
 
 		for (int i = 0; i < featureMatrix.size(); i++) {
-			svm_node[] testfeaturenotes = featureMatrix.get(i).toArray(new svm_node[]{});
+			svm_node[] testfeaturenotes = featureMatrix.get(i).toArray(new svm_node[] {});
 			double[] arg2 = new double[labelTypes.size()];
 			double label = svm.svm_predict_probability(this.model, testfeaturenotes, arg2);
 			predictions.add(labelArray.get((int) label));
 		}
 
-		evaluate(labels, predictions, semevaltest.getDocuments());
+		System.out.println(predictions.size());
+		 evaluate(labels, predictions, effectiveDoc);
 	}
 
 	private void evaluate(ArrayList<String> labels, ArrayList<String> predictions, ArrayList<Document> docs) {
@@ -185,7 +193,12 @@ public class SVM_Trainer implements Serializable {
 				// System.out.println();
 			}
 		}
-		System.out.println("TOTAL:" + (lcorrect + mcorrect) / (ltotal + mtotal));
+		System.out.println(ltotal);
+		System.out.println(mtotal);
+		System.out.println(mixtotal);
+		
+		System.out.println("DeMix- TOTAL:" + (lcorrect + mcorrect ) / (ltotal + mtotal ));
+		System.out.println("TOTAL:" + (lcorrect + mcorrect + mixcorrect) / (ltotal + mtotal + mixtotal));
 		System.out.printf("Literal: precision: %f, recall: %f, F1: %f\n", lcorrect / lpred, lcorrect / ltotal, 2 * lcorrect
 				/ (lpred + ltotal));
 		System.out.printf("metonymic: precision: %f, recall: %f, F1: %f\n", mcorrect / mpred, mcorrect / mtotal, 2 * mcorrect

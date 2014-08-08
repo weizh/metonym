@@ -9,6 +9,8 @@ import java.util.List;
 
 import utils.BrownCluster_Str;
 import utils.Embeddings_Vec;
+import utils.GoogleNgram;
+import utils.JWNLUtils;
 import utils.Levin;
 
 import libsvm.svm_node;
@@ -103,7 +105,7 @@ public class FeatureExtractor implements Serializable {
 					nodes.get(0).index = 0;
 					nodes.get(0).value = determiner ? 1 : 0;
 					features.add(nodes);
-					System.out.println(determiner);
+					// System.out.println(determiner);
 				}
 			}
 		}
@@ -116,13 +118,19 @@ public class FeatureExtractor implements Serializable {
 
 		NominalFeature frelations = new NominalFeature("Feature: Parse:tRelations");
 		NominalFeature ftarget = new NominalFeature("Feature: Parse:target");
-
+		NominalFeature fPOS = new NominalFeature("Feature: Parse:targetPOS");
+		int doccount = 0;
 		for (Document doc : docs) {
+			// doccount++;
+
 			ArrayList<svm_node> feat = new ArrayList<svm_node>();
 			String t = "[N/A]", s = "[N/A]", relt = "[N/A]", rels = "[N/A]";
+			String tpos = null, spos = null;
+			boolean containsNE = false;
 			for (Sentence sent : doc.getParagraphs().get(0).getSentences()) {
 				if (sent.getEntities().size() == 0)
 					continue;
+				containsNE = true;
 				NamedEntity ne = sent.getNamedEntities().get(0);
 				Word head = ne.getLastWord();
 
@@ -132,24 +140,34 @@ public class FeatureExtractor implements Serializable {
 					String rel = dep.getRelation();
 					if (src.equals(head)) {
 						t = tgt.getLemma();
+						tpos = tgt.getPOS();
+						// t = JWNLUtils.getWordNetSenseHead(tgt);
 						relt = rel;
 					} else if (tgt.equals(head)) {
-						rels = rel;
 						s = src.getLemma();
+						spos = src.getPOS();
+						// s = JWNLUtils.getWordNetSenseHead(src);
+						rels = rel;
 					}
 					frelations.addFeatureValue(relt);
 					frelations.addFeatureValue(rels);
 					ftarget.addFeatureValue(t);
 					ftarget.addFeatureValue(s);
+					fPOS.addFeatureValue(spos);
+					fPOS.addFeatureValue(tpos);
 				}
-				
-			}
 
+			}
+			if (containsNE)
+				doccount++;
 		}
+		System.out.println(doccount);
 
 		for (Document doc : docs) {
 			ArrayList<svm_node> feat = new ArrayList<svm_node>();
 			String t = "[N/A]", s = "[N/A]", relt = "[N/A]", rels = "[N/A]";
+			 String nt="[N/A]", ns="[N/A]";
+			String tpos=null, spos=null;
 			for (Sentence sent : doc.getParagraphs().get(0).getSentences()) {
 				if (sent.getEntities().size() == 0)
 					continue;
@@ -162,14 +180,43 @@ public class FeatureExtractor implements Serializable {
 					String rel = dep.getRelation();
 					if (src.equals(head)) {
 						t = tgt.getLemma();
+						tpos = tgt.getPOS();
+						  nt = JWNLUtils.getWordNetSenseHead(tgt);
 						relt = rel;
 					} else if (tgt.equals(head)) {
-						rels = rel;
 						s = src.getLemma();
+						spos = src.getPOS();
+						 ns = JWNLUtils.getWordNetSenseHead(src);
+						rels = rel;
 					}
 				}
-				feat.addAll(ftarget.getSVMNodeVector(new String[]{t,s}));
-				feat.addAll(frelations.getSVMNodeVector(new String[]{relt,rels}));
+				// use wordnet OR
+				// use one hot coding (Dont forget to change the t and s
+				// generation codes
+//				feat.addAll(ftarget.getSVMNodeVector(new String[] { t, s }));
+//				feat.addAll(fPOS.getSVMNodeVector(new String[]{tpos,spos}));
+				
+				// wordnet feature
+//				feat.addAll(ftarget.getSVMNodeVector(new String[] { nt, ns }));
+
+				
+				// use brown cluster
+				feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(t, 3));
+				feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(s, 3));
+
+//				// use word embeddings
+//				feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(s));
+//				feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(t));
+
+				// levin category
+//				 feat.addAll(Levin.getGetLevinSvmNodes(s));
+//				 feat.addAll(Levin.getGetLevinSvmNodes(t));
+
+				// google ngram
+//				feat.addAll(GoogleNgram.getGNgramSvmNodeVector(s));
+//				feat.addAll(GoogleNgram.getGNgramSvmNodeVector(t));
+//				
+				feat.addAll(frelations.getSVMNodeVector(new String[] { relt, rels }));
 				features.add(feat);
 			}
 
@@ -194,28 +241,35 @@ public class FeatureExtractor implements Serializable {
 
 					if (s >= 3) {
 						p3 = sent.getWords().get(s - 3).getLemma();
+						p3 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(s-3));
 					}
 					if (s >= 2) {
 						p2 = sent.getWords().get(s - 2).getLemma();
+						p2 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(s-2));
 					}
 					if (s >= 1) {
 						p1 = sent.getWords().get(s - 1).getLemma();
+						p1 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(s-1));
+
 					}
 					if (e < sent.getWords().size() - 1) {
 						n1 = sent.getWords().get(e + 1).getLemma();
+						n1 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(e + 1));
 					}
 					if (e < sent.getWords().size() - 2) {
 						n2 = sent.getWords().get(e + 2).getLemma();
+						n2 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(e + 2));
 					}
 					if (e < sent.getWords().size() - 3) {
 						n3 = sent.getWords().get(e + 3).getLemma();
+						n3 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(e + 3));
 					}
 					fctxt.addFeatureValue(p3);
 					fctxt.addFeatureValue(p2);
 					fctxt.addFeatureValue(p1);
 					fctxt.addFeatureValue(n1);
 					fctxt.addFeatureValue(n2);
-//					fctxt.addFeatureValue(n3);
+					fctxt.addFeatureValue(n3);
 
 				}
 			}
@@ -228,33 +282,69 @@ public class FeatureExtractor implements Serializable {
 					NamedEntity ne = sent.getNamedEntities().get(0);
 					int s = ne.getStart();
 					int e = ne.getEnd();
-					String p3 = "[N/A]", p2 = "[N/A]", p1 = "[N/A]", n1 = "[N/A]", n2 = "[N/A]", n3 = "[N/A]";
-					if (s >= 3)
+					String p4 = "[N/A]", p3 = "[N/A]", p2 = "[N/A]", p1 = "[N/A]", n1 = "[N/A]", n2 = "[N/A]", n3 = "[N/A]", n4 = "[N/A]";
+					String ap1 =  "[N/A]", an1 =  "[N/A]";
+					if (s >= 4)
+						p4 = sent.getWords().get(s - 4).getLemma();
+					if (s >= 3){
 						p3 = sent.getWords().get(s - 3).getLemma();
-					if (s >= 2)
+						p3 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(s-3));
+					}
+					if (s >= 2){
 						p2 = sent.getWords().get(s - 2).getLemma();
-					if (s >= 1)
+						p2 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(s-2));
+					}
+					if (s >= 1){
 						p1 = sent.getWords().get(s - 1).getLemma();
+						ap1 =p1;
+						p1 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(s-1));
+					}
 					if (e < sent.getWords().size() - 1) {
 						n1 = sent.getWords().get(e + 1).getLemma();
+						an1 = n1;
+						n1 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(e + 1));
+
 					}
 					if (e < sent.getWords().size() - 2) {
 						n2 = sent.getWords().get(e + 2).getLemma();
+						n2 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(e + 2));
 					}
 					if (e < sent.getWords().size() - 3) {
 						n3 = sent.getWords().get(e + 3).getLemma();
+						n3 = JWNLUtils.getWordNetSenseHead(sent.getWords().get(e + 3));
+					}
+					if (e < sent.getWords().size() - 4) {
+						n4 = sent.getWords().get(e + 4).getLemma();
 					}
 
-					// One Hot Coding
-//					String[] keys = new String[] { p3, p2, p1, n1, n2, n3 };	
-//					features.add(fctxt.getSVMNodeVector(keys));
-					
-					// word embeddings
 					ArrayList<svm_node> feat = new ArrayList<svm_node>();
-					feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(p2));
-					feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(p1));
-					feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(n1));
-					feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(n2));
+
+					// One Hot Coding
+//					 String[] keys = new String[] { p1, n1};
+//					 feat.addAll(fctxt.getSVMNodeVector(keys));
+					
+					
+					// word embeddings --- ABANDONED
+//					feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(ap1));
+//					feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(an1));
+
+//					// bc:
+//					feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(p3, 3));
+//					feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(p2, 3));
+//					feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(ap1, 3));
+//					feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(an1, 3));
+//					feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(n2, 3));
+//					feat.addAll(BrownCluster_Str.getBrownClusterIdSvmNode(n3, 3));
+
+					//levin:
+//					feat.addAll(Levin.getGetLevinSvmNodes(p2));
+					feat.addAll(Levin.getGetLevinSvmNodes(ap1));
+					feat.addAll(Levin.getGetLevinSvmNodes(an1));
+//					feat.addAll(Levin.getGetLevinSvmNodes(n2));
+					
+					// word net 
+//					in the context.
+
 					features.add(feat);
 				}
 			}// end sent loop

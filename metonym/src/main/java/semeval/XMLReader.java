@@ -36,4 +36,15 @@ public class XMLReader {
 		return samples;
 	}
 
+	public static void main(String argv[]) throws Exception{
+		for (Sample s : parse("src/main/resources/countries.test"))
+		{
+			System.out.println(s.sample_id);
+			System.out.println(s.reading);
+			System.out.println(s.annotatedword);
+			System.out.println(s.bnc_title);
+			System.out.println(s.par+" "+ s.par2);
+		}
+		
+	}
 }

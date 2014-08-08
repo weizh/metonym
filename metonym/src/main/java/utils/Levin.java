@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import libsvm.svm_node;
+
 public class Levin {
 	static HashMap<String, HashSet<String>> levin;
 
@@ -60,28 +62,40 @@ public class Levin {
 		return cats;
 	}
 
-	public static ArrayList<Double> getGetLevinVector(String s) {
+	public static ArrayList<svm_node> getGetLevinSvmNodes(String s) {
 		
 		
-		ArrayList<Double> darray = new ArrayList<Double>();
+		ArrayList<svm_node> darray = new ArrayList<svm_node>();
 
 		HashSet<String> cats = levin.get(Stemmer.stemTerm(s.trim().toLowerCase()));
 
-		if (cats != null)
+		if (cats != null){
+			int in=0;
 			for (Iterator<String> i = ids.iterator(); i.hasNext();) {
 				s = i.next();
-				darray.add((double) (cats.contains(s) ? 1 : 0));
+				svm_node n = new svm_node();
+				n.index=in++;
+				n.value=cats.contains(s)? 1:0;
+				darray.add(n);
 			}
-		else
+		}
+		else{
+			int in=0;
 			for (Iterator<String> i = ids.iterator(); i.hasNext();) {
 				s = i.next();
-				darray.add((double) 0);
+				svm_node n = new svm_node();
+				n.index=in++;
+				n.value=-1;
+				darray.add(n);
 			}
+		}
 			
 		return darray;
 	}
 
 	public static void main(String argv[]) {
-		System.out.println(getGetLevinVector("sun"));
+		ArrayList<svm_node> n = getGetLevinSvmNodes("get");
+		for (svm_node  node : n)
+		System.out.println(node.index+" "+ node.value	);
 	}
 }

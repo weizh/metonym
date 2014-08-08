@@ -1,11 +1,16 @@
 package semeval;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -130,6 +135,30 @@ public class SemEval_Dataset extends DataSet {
 		ObjectOutputStream out = new ObjectOutputStream(fos);
 		out.writeObject(this);
 		out.close();
+	}
+
+	public static  SemEval_Dataset CorrectTestSet(SemEval_Dataset semevaltest) throws IOException {
+		HashMap<String, String> modif = new HashMap<String, String>();
+		BufferedReader br = new BufferedReader(new FileReader(new File("src/main/resources/countryTestModif.txt")));
+		String line = null;
+		while((line = br.readLine())!=null){
+			String[] ts = line.split(" ");
+			modif.put(ts[0], ts[1]);
+		}
+		for (Document doc: semevaltest.getDocuments()){
+			System.out.println(doc.getDocId());
+			for (Sentence s : doc.getParagraphs().get(0).getSentences())
+			{
+				System.out.println(s.getPlainSentence());
+				if (s.getEntities().size()==0)continue;
+				System.out.println(s.getNamedEntities().get(0).getLemma());
+				System.out.println(s.getNamedEntities().get(0).getEntityType());
+				
+//				if (modif.containsKey(doc.getDocId()))
+//					s.getNamedEntities().get(0).setEntityType(modif.get(doc.getDocId()));
+			}
+		}
+		return semevaltest;
 	}
 
 }

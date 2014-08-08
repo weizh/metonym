@@ -7,8 +7,8 @@ public class MetoTrainer {
 
 	public static void main(String arvc[]) throws Exception {
 
-		String name = "countries.train.data";
-		// String name ="companies.train.data";
+//		String name = "countries.train.data";
+		 String name ="companies.train.data";
 		SemEval_Dataset semevaltrain = SemEval_Dataset.load(name);
 
 		// /////////////////////////////////////////////////////////// SVM
@@ -17,8 +17,10 @@ public class MetoTrainer {
 		// String model = "companies.MetoModel";
 
 		SVM_Trainer metoModel = new SVM_Trainer(new FeatureExtractor(
-//				"context"
-//				, "determiner" 
+				"context"
+				,
+				"determiner"
+				,
 				"parse"
 				));
 		System.out.println(model + " constructed.");

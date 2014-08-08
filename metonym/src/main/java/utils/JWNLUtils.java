@@ -25,9 +25,38 @@ public class JWNLUtils {
 		}
 		wn = Dictionary.getInstance();
 	}
+	public static String getWordNetSenseHead( model.Word w) throws JWNLException{
+		String pos = w.getPOS();
+		
+		POS p = null;
+		if (pos.startsWith("NN"))
+			p = POS.NOUN;
+		else if (pos.startsWith("VB"))
+			p = POS.VERB;
+		else if (pos.startsWith("JJ"))
+			p =POS.ADJECTIVE;
+		else if (pos.startsWith("RB"))
+			p = POS.ADVERB;
+		else 
+			return w.getWordForm();
+		
+		IndexWord a = wn.lookupIndexWord(p, w.getLemma());
+		if (a==null) return w.getLemma();
+		Synset[] as = a.getSenses();
+		for (Synset s : as){
+			return s.getKey().toString();
+		}
+		return w.getLemma();
+	}
 
 	public static void main(String argvp[]) throws JWNLException {
-		String lemma = "speak";
+		String lemma = "234";
+		
+		model.Word w = new model.Word();
+		w.setWord(lemma);
+		w.setLemma(lemma);
+		w.setPOS("DT");
+		System.out.println(getWordNetSenseHead(w));
 		/**
 		 * provide 2332196 1185006 1065210 2381380 2727313 2224224 407888
 		 * 
@@ -42,16 +71,15 @@ public class JWNLUtils {
 		 * 
 		 * 
 		 */
-		IndexWord a = wn.lookupIndexWord(POS.VERB, "talk");
-
-		Synset[] as = a.getSenses();
-		for (Synset s : as){
-			System.out.println("\n"+s.getKey());
-			Word[] words = s.getWords();
-			for (Word word : words){
-				System.out.println(word.getLemma());
-			}
-		}
-
+//		IndexWord a = wn.lookupIndexWord(POS.VERB, "supply");
+//
+//		Synset[] as = a.getSenses();
+//		for (Synset s : as){
+//			System.out.println("\n"+s.getKey());
+//			Word[] words = s.getWords();
+//			for (Word word : words){
+//				System.out.println(word.getLemma());
+//			}
+//		}
 	}
 }

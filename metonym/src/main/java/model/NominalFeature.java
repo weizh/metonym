@@ -79,6 +79,8 @@ public class NominalFeature extends Feature {
 		}
 		
 		for (String v : value){
+			if (v==null)
+				continue;
 			if (v.endsWith("[N/A]"))
 				continue;
 			nodes.get(getValueId(v)).value = 1;
