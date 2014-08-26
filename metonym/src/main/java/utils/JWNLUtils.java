@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import net.didion.jwnl.JWNL;
 import net.didion.jwnl.JWNLException;
 import net.didion.jwnl.data.IndexWord;
+import net.didion.jwnl.data.IndexWordSet;
 import net.didion.jwnl.data.POS;
 import net.didion.jwnl.data.Synset;
 import net.didion.jwnl.data.Word;
@@ -49,6 +50,31 @@ public class JWNLUtils {
 		return w.getLemma();
 	}
 
+	public static String getWordNetSenseHead(String w){
+		
+		IndexWordSet a = null;
+		try {
+			a = wn.lookupAllIndexWords(w);
+		} catch (JWNLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (a==null) return w;
+		for ( IndexWord ws : a.getIndexWordArray()){
+			Synset[] as = null;
+			try {
+				as = ws.getSenses();
+			} catch (JWNLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			for (Synset s : as){
+				return s.getKey().toString();
+			}
+		}
+		return w;
+	}
+	
 	public static void main(String argvp[]) throws JWNLException {
 		String lemma = "234";
 		

@@ -49,8 +49,13 @@ public class MyHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("annot")) {
 
 			par = false;
-			s.setPar(firsthalf.toString());
-
+			String ss = firsthalf.toString();
+			if (ss.length() == 0)
+				s.setPar(ss);
+			else if (ss.charAt(ss.length() - 1) != ' ')
+				s.setPar(ss + " ");
+			else
+				s.setPar(ss);
 			annot = true;
 
 		}
@@ -106,8 +111,8 @@ public class MyHandler extends DefaultHandler {
 			bnc_title = false;
 		}
 		if (par) {
-			if (firsthalf.length()==0 )
-				firsthalf.append(new String(ch, start+1, length-1));
+			if (firsthalf.length() == 0)
+				firsthalf.append(new String(ch, start + 1, length - 1));
 			else
 				firsthalf.append(new String(ch, start, length));
 

@@ -67,4 +67,11 @@ public class NamedEntity extends Phrase {
 		// TODO Auto-generated method stub
 		return super.sent.wordAt(super.end);
 	}
+//	public Word[] getArrayWords(){
+//		Word [] ns = new Word[super.end-super.start+1];
+//		for (int i=super.start; i<super.end+1; i++){
+//			ns [i-super.start] = sent.wordAt(i);
+//		}
+//		return ns;
+//	}
 }

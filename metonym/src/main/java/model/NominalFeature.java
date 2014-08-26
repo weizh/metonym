@@ -2,6 +2,7 @@ package model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
 import libsvm.svm_node;
 
 /**
@@ -41,9 +42,9 @@ public class NominalFeature extends Feature {
 	 */
 	public int getValueId(String value) {
 		if (dictionary.containsKey(value) == false) {
-			System.out.println("dictionary is:" + dictionary);
-			System.out.println("Value is: " + value);
-			System.err.println("value not in Dictionary for Nominal Feature!");
+//			System.out.println("dictionary is:" + dictionary);
+//			System.out.println("Value is: " + value);
+			System.err.println("value not in Dictionary for Nominal Feature "+ value);
 			return -1;
 		} else
 			return dictionary.get(value);
@@ -51,7 +52,8 @@ public class NominalFeature extends Feature {
 
 	public ArrayList<svm_node> getSVMNodeVector(String value) throws Exception {
 		if (dictionary.size() == 0) {
-			throw new Exception("No dictionary for feature " + this.featureHeader);
+			throw new Exception("No dictionary for feature "
+					+ this.featureHeader);
 		}
 		ArrayList<svm_node> nodes = new ArrayList<svm_node>();
 		for (int i = 0; i < dictionary.size(); i++) {
@@ -62,13 +64,18 @@ public class NominalFeature extends Feature {
 		}
 		if (value.endsWith("[N/A]"))
 			return nodes;
-		
+
+		if (getValueId(value) == -1)
+			return nodes;
 		nodes.get(getValueId(value)).value = 1;
 		return nodes;
 	}
-	public ArrayList<svm_node> getSVMNodeVector(String[] value) throws Exception {
+
+	public ArrayList<svm_node> getSVMNodeVector(String[] value)
+			throws Exception {
 		if (dictionary.size() == 0) {
-			throw new Exception("No dictionary for feature " + this.featureHeader);
+			throw new Exception("No dictionary for feature "
+					+ this.featureHeader);
 		}
 		ArrayList<svm_node> nodes = new ArrayList<svm_node>();
 		for (int i = 0; i < dictionary.size(); i++) {
@@ -77,15 +84,22 @@ public class NominalFeature extends Feature {
 			n.value = 0;
 			nodes.add(n);
 		}
-		
-		for (String v : value){
-			if (v==null)
+
+		for (String v : value) {
+			if (v == null)
 				continue;
 			if (v.endsWith("[N/A]"))
 				continue;
-			nodes.get(getValueId(v)).value = 1;
+			if (getValueId(v) != -1)
+				nodes.get(getValueId(v)).value = 1;
 		}
-		
+
 		return nodes;
+	}
+
+	public void addFeatureValue(ArrayList<String> t) {
+		for ( String ts : t){
+			addFeatureValue(ts);
+		}
 	}
 }

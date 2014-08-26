@@ -16,7 +16,9 @@ public class BrownCluster_Str {
 	static {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader("src/main/resources/brown-rcv1.clean.tokenized-CoNLL03.txt-c100-freq1.txt"));
+			br = new BufferedReader(
+					new FileReader(
+							"src/main/resources/brown-rcv1.clean.tokenized-CoNLL03.txt-c100-freq1.txt"));
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -45,41 +47,58 @@ public class BrownCluster_Str {
 		// System.out.println(s);
 		String t = Stemmer.stemTerm(s.trim().toLowerCase());
 		String ss = bc.get(t);
-		return ss == null ? s : ss.substring(0, cutoff);
+		return "br_"+ (ss == null ? s : ss.substring(0, cutoff));
 	}
 
-	public static ArrayList<svm_node> getBrownClusterIdSvmNode(String s, int cutoff){
-//		System.out.println(cutoff);
-		ArrayList<svm_node> nodes = new ArrayList<svm_node>();
-		for ( int i = 0; i< cutoff; i++){
-			svm_node n = new svm_node();
-			n.index=i;
-			n.value = -1 ;
-			nodes.add(n);
-		}
-//		System.out.println(nodes.size());
+	public static ArrayList<String> getBrownClusterIdArray(String s, int cutoff) {
 		String t = Stemmer.stemTerm(s.trim().toLowerCase());
 		String ss = bc.get(t);
-		if (ss==null){
+		if (ss == null) {
+			ArrayList<String> ar = new ArrayList<String>();
+			ar.add(s);
+			return ar;
+		} else {
+			ArrayList<String> sarray = new ArrayList<String>();
+			for (int i = 0; i < cutoff; i++)
+				sarray.add( "br_" + ss.charAt(i));
+			return sarray;
+		}
+
+	}
+
+	public static ArrayList<svm_node> getBrownClusterIdSvmNode(String s,
+			int cutoff) {
+		// System.out.println(cutoff);
+		ArrayList<svm_node> nodes = new ArrayList<svm_node>();
+		for (int i = 0; i < cutoff; i++) {
+			svm_node n = new svm_node();
+			n.index = i;
+			n.value = -1;
+			nodes.add(n);
+		}
+		// System.out.println(nodes.size());
+		String t = Stemmer.stemTerm(s.trim().toLowerCase());
+		String ss = bc.get(t);
+		if (ss == null) {
 			return nodes;
-		}else {
-//			System.out.println(ss);
-			for(int i=0;i<cutoff; i++){
-				nodes.get(i).value
-				=ss.charAt(i)-'0';
+		} else {
+			// System.out.println(ss);
+			for (int i = 0; i < cutoff; i++) {
+				nodes.get(i).value = ss.charAt(i) - '0';
 			}
 			return nodes;
 		}
-				
+
 	}
+
 	public static void main(String argv[]) {
-//		System.out.println(getBrownClusterId("talk",4));
-		ArrayList<svm_node> a = getBrownClusterIdSvmNode("talk",6);
-		for ( svm_node n : a	){
-			System.out.println(n.index+ " "+ n.value);
-			
+		// System.out.println(getBrownClusterId("talk",4));
+		ArrayList<svm_node> a = getBrownClusterIdSvmNode("talk", 6);
+		for (svm_node n : a) {
+			System.out.println(n.index + " " + n.value);
+
 		}
-//		System.out.println(getBrownClusterIdSvmNode("talk",4));
+		// System.out.println(getBrownClusterIdSvmNode("talk",4));
 		/**
 		 * 1000011001 break 1111010101011 hurt
 		 */

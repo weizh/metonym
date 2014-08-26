@@ -59,7 +59,7 @@ public class SemEval_Dataset extends DataSet {
 		SemEval_Dataset sem = new SemEval_Dataset();
 
 		for (Sample s : samples) {
-			System.out.println(s);
+			System.out.println(s.getSample_id());
 
 			Document d = new Document(s.getSample_id());
 			sem.add(d);
@@ -69,6 +69,7 @@ public class SemEval_Dataset extends DataSet {
 
 			PipeLineAnnotate annot = new PipeLineAnnotate(s.getTotal());
 
+			boolean containsLocation = false;
 			for (CoreMap sent : annot.getSentences()) {
 
 				Sentence sentence = new Sentence(sent.get(TextAnnotation.class));
@@ -82,12 +83,20 @@ public class SemEval_Dataset extends DataSet {
 
 				for (CoreLabel token : sent.get(TokensAnnotation.class)) {
 					int b = token.beginPosition(), e = token.endPosition();
-					Word word = new Word(token.getString(TextAnnotation.class), b, e, token.index());
-					word.setPOS(token.get(CoreAnnotations.PartOfSpeechAnnotation.class));
-					word.setLemma(token.get(CoreAnnotations.LemmaAnnotation.class));
+					Word word = new Word(token.getString(TextAnnotation.class),
+							b, e, token.index());
+					word.setPOS(token
+							.get(CoreAnnotations.PartOfSpeechAnnotation.class));
+					word.setLemma(token
+							.get(CoreAnnotations.LemmaAnnotation.class));
+					word.setEntityType(token
+							.get(CoreAnnotations.NamedEntityTagAnnotation.class));
 					words.add(word);
-					
+
 					if (b >= s.getE_start() && e <= s.getE_end()) {
+						// if (Math.abs(b - s.getE_start())<=1 && Math.abs(e
+						// -s.getE_end())<=1) {
+
 						if (eTokenStart == -1)
 							eTokenStart = tokenCount;
 						eTokenEnd = tokenCount;
@@ -97,23 +106,43 @@ public class SemEval_Dataset extends DataSet {
 				}
 
 				if (eTokenStart != -1 && eTokenEnd != -1) {
-					sentence.addNamedEntity(new NamedEntity(s.getReading(), eTokenStart, eTokenEnd, sentence));
+					NamedEntity NE = new NamedEntity(s.getReading(),
+							eTokenStart, eTokenEnd, sentence);
+					if (s.getReading().equalsIgnoreCase("metonymic"))
+						NE.setEntityType(s.getMetotype());
+					
+					sentence.addNamedEntity(NE);
+
+					containsLocation = true;
 				}
 
-				Set<SemanticGraphEdge> dependencies = annot.getDependencies(sent);
+				Set<SemanticGraphEdge> dependencies = annot
+						.getDependencies(sent);
 				for (SemanticGraphEdge sge : dependencies) {
 					IndexedWord src = sge.getSource();
 					IndexedWord tgt = sge.getTarget();
 					GrammaticalRelation rel = sge.getRelation();
-					Word srcw = new Word(src.get(TextAnnotation.class), src.beginPosition(), src.endPosition(), src.index());
+					Word srcw = new Word(src.get(TextAnnotation.class),
+							src.beginPosition(), src.endPosition(), src.index());
 					srcw.setLemma(src.lemma());
-					srcw.setPOS(src.get(CoreAnnotations.PartOfSpeechAnnotation.class));
-					Word tgtw = new Word(tgt.get(TextAnnotation.class), tgt.beginPosition(), tgt.endPosition(), tgt.index());
+					srcw.setPOS(src
+							.get(CoreAnnotations.PartOfSpeechAnnotation.class));
+					Word tgtw = new Word(tgt.get(TextAnnotation.class),
+							tgt.beginPosition(), tgt.endPosition(), tgt.index());
 					tgtw.setLemma(tgt.lemma());
-					tgtw.setPOS(tgt.get(CoreAnnotations.PartOfSpeechAnnotation.class));
-					Dependency p = new Dependency(sentence, srcw, tgtw, rel.getLongName());
+					tgtw.setPOS(tgt
+							.get(CoreAnnotations.PartOfSpeechAnnotation.class));
+					Dependency p = new Dependency(sentence, srcw, tgtw,
+							rel.getLongName());
 					sentence.addDependency(p);
 				}
+			}
+
+			if (!containsLocation) {
+				System.out.println(s.getSample_id());
+				System.out.println(s.getE_start() + " " + s.getE_end());
+				System.out.println(s.getTotal());
+				System.out.println(s.getAnnotatedword());
 			}
 			// break;
 		}
@@ -121,7 +150,8 @@ public class SemEval_Dataset extends DataSet {
 		return sem;
 	}
 
-	public static SemEval_Dataset load(String file) throws IOException, ClassNotFoundException {
+	public static SemEval_Dataset load(String file) throws IOException,
+			ClassNotFoundException {
 		FileInputStream in = new FileInputStream(file);
 		ObjectInputStream ins = new ObjectInputStream(in);
 		SemEval_Dataset copy = (SemEval_Dataset) ins.readObject();
@@ -137,25 +167,27 @@ public class SemEval_Dataset extends DataSet {
 		out.close();
 	}
 
-	public static  SemEval_Dataset CorrectTestSet(SemEval_Dataset semevaltest) throws IOException {
+	public static SemEval_Dataset CorrectTestSet(SemEval_Dataset semevaltest)
+			throws IOException {
 		HashMap<String, String> modif = new HashMap<String, String>();
-		BufferedReader br = new BufferedReader(new FileReader(new File("src/main/resources/countryTestModif.txt")));
+		BufferedReader br = new BufferedReader(new FileReader(new File(
+				"src/main/resources/countryTestModif.txt")));
 		String line = null;
-		while((line = br.readLine())!=null){
+		while ((line = br.readLine()) != null) {
 			String[] ts = line.split(" ");
 			modif.put(ts[0], ts[1]);
 		}
-		for (Document doc: semevaltest.getDocuments()){
+		for (Document doc : semevaltest.getDocuments()) {
 			System.out.println(doc.getDocId());
-			for (Sentence s : doc.getParagraphs().get(0).getSentences())
-			{
+			for (Sentence s : doc.getParagraphs().get(0).getSentences()) {
 				System.out.println(s.getPlainSentence());
-				if (s.getEntities().size()==0)continue;
+				if (s.getEntities().size() == 0)
+					continue;
 				System.out.println(s.getNamedEntities().get(0).getLemma());
 				System.out.println(s.getNamedEntities().get(0).getEntityType());
-				
-//				if (modif.containsKey(doc.getDocId()))
-//					s.getNamedEntities().get(0).setEntityType(modif.get(doc.getDocId()));
+
+				// if (modif.containsKey(doc.getDocId()))
+				// s.getNamedEntities().get(0).setEntityType(modif.get(doc.getDocId()));
 			}
 		}
 		return semevaltest;
