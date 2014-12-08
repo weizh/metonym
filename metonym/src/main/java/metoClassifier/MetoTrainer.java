@@ -9,8 +9,8 @@ import svm.SVM_Trainer;
 public class MetoTrainer {
 
 	public static void main(String arvc[]) throws Exception {
-		String data="countries";
-//		String data="companies";
+//		String data="countries";
+		String data="companies";
 		String name = "src/main/resources/"+data+".train.data";
 		SemEval_Dataset semevaltrain = SemEval_Dataset.load(name);
 		HashMap<String, FileReadDependency> deps = GrammerReader.readDependency("src/main/resources/"+data+".train.grammannot");

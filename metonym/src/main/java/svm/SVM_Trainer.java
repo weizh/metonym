@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -83,6 +84,7 @@ public class SVM_Trainer implements Serializable {
 
 		List<String> labels = new ArrayList<String>();
 
+		TObjectIntHashMap<String> labelstat = new TObjectIntHashMap<String>();
 		// initialize features
 		fe.initialize(semevaltrain.getDocuments());
 
@@ -97,13 +99,14 @@ public class SVM_Trainer implements Serializable {
 					for (NamedEntity ne : nes) {
 						String type = ne.getEntityType();
 									
-						 if (!type.equalsIgnoreCase("literal"))
-						 type = "non-literal";
+//						 if (!type.equalsIgnoreCase("literal"))
+//						 type = "non-literal";
 						
 //						if (!type.equalsIgnoreCase("literal")
 //								&& !type.equalsIgnoreCase("mixed"))
 //							type = "metonymic";
 						
+						labelstat.adjustOrPutValue(type, 1, 1);
 						labels.add(type);
 						if (!labelTypes.containsKey(type)) {
 							labelTypes.put(type, labelId++);
@@ -114,7 +117,8 @@ public class SVM_Trainer implements Serializable {
 				}
 			}
 		}
-
+		System.out.println(labelstat);
+		
 		svm_problem problem = new svm_problem();
 		problem.l = featureMatrix.size();
 		problem.x = new svm_node[problem.l][];
@@ -149,14 +153,14 @@ public class SVM_Trainer implements Serializable {
 			for (Sentence sent : doc.getParagraphs().get(0).getSentences()) {
 				if (sent.getEntities().size() != 0) {
 					String type = sent.getEntities().get(0).getEntityType();
-					
-					 if (!type.equalsIgnoreCase("literal"))
-					 type = "non-literal";
-					
-//					if (!type.equalsIgnoreCase("literal")
-//							&& !type.equalsIgnoreCase("mixed"))
-//						type = "metonymic";
-					
+
+//					 if (!type.equalsIgnoreCase("literal"))
+//					 type = "non-literal";
+//
+//					 if (!type.equalsIgnoreCase("literal")
+//					 && !type.equalsIgnoreCase("mixed"))
+//					 type = "metonymic";
+
 					labels.add(type);
 					hasNE = true;
 				}
@@ -186,6 +190,8 @@ public class SVM_Trainer implements Serializable {
 		TObjectDoubleHashMap<String> total = new TObjectDoubleHashMap<String>();
 		TObjectDoubleHashMap<String> pred = new TObjectDoubleHashMap<String>();
 		TObjectDoubleHashMap<String> correct = new TObjectDoubleHashMap<String>();
+		HashSet<String> met2Lit= new HashSet<String>();
+		HashSet<String> lit2Met = new HashSet<String>();
 
 		double Total = labels.size(), Correct = 0;
 		for (int i = 0; i < labels.size(); i++) {
@@ -196,6 +202,11 @@ public class SVM_Trainer implements Serializable {
 				Correct++;
 				correct.adjustOrPutValue(predictions.get(i), 1, 1);
 			} else {
+				if (labels.get(i).equals("literal"))
+					lit2Met.add(docs.get(i).getDocId());
+				if (labels.get(i).startsWith("p")|| labels.get(i).startsWith("o"))
+					met2Lit.add(docs.get(i).getDocId());
+				
 				List<Sentence> sents = docs.get(i).getParagraphs().get(0)
 						.getSentences();
 				for (Sentence sent : sents) {
@@ -215,7 +226,7 @@ public class SVM_Trainer implements Serializable {
 		}
 		System.out.println(total);
 
-		System.out.println("TOTAL:" + Correct / Total);
+		System.out.println("TOTAL:" + Correct / Total +" ");
 		TObjectDoubleIterator<String> i = total.iterator();
 		while (i.hasNext()) {
 			i.advance();
@@ -223,9 +234,16 @@ public class SVM_Trainer implements Serializable {
 			Double t = i.value();
 			Double c = correct.get(n);
 			Double p = pred.get(n);
-			System.out.printf(n + ": precision: %f, recall: %f, F1: %f\n", c
-					/ p, c / t, 2 * c / (p + t));
+			System.out.printf(n + ": precision: %f, recall: %f, F1: %f, c: %f, p: %f, t %f \n", c
+					/ p, c / t, 2 * c / (p + t), c, p,t);
 		}
+		ArrayList<String> met2litarray = new ArrayList<String>(met2Lit);
+		Collections.sort(met2litarray);
+		System.out.println(met2litarray);
+		
+		ArrayList<String> lit2metarray = new ArrayList<String>(lit2Met);
+		Collections.sort(lit2metarray);
+		System.out.println(lit2metarray);
 
 	}
 

@@ -10,8 +10,8 @@ public class MetoTester {
 
 	public static void main(String arvc[]) throws Exception {
 
-		String data = "countries";
-//		String data="companies";
+//		String data = "countries";
+		String data="companies";
 
 		String name = "src/main/resources/"+data+".test.data";
 		// String name ="src/main/resources/companies.test.data";
