@@ -29,7 +29,7 @@ public class FeatureExtractor implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final String[] featureHeads; // default is the parse feature only.
-	private final HashMap<String, FileReadDependency> deps;
+	private HashMap<String, FileReadDependency> deps;
 	
 	int fValLen;
 	NominalFeature feature;
@@ -59,9 +59,6 @@ public class FeatureExtractor implements Serializable {
 		for (String featureHead : featureHeads) {
 			if (featureHead.equals("context")) {
 				initContextFeature(docs);
-			}
-			if (featureHead.equals("determiner")) {
-				initDeterminerFeature(docs);
 			}
 			if (featureHead.equals("parse")) {
 				initParseFeature(docs);
@@ -107,9 +104,6 @@ public class FeatureExtractor implements Serializable {
 		return features;
 	}
 
-	private void initDeterminerFeature(ArrayList<Document> docs) {
-
-	}
 
 	private ArrayList<ArrayList<svm_node>> extractDeterminerFeature(
 			ArrayList<Document> docs) {
