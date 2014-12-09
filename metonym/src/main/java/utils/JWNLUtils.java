@@ -16,7 +16,7 @@ public class JWNLUtils {
 	static Dictionary wn;
 	static {
 		try {
-			JWNL.initialize(new FileInputStream("wordnet/jwnl-properties.xml"));
+			JWNL.initialize(new FileInputStream("src/main/resources/wordnet/jwnl-properties.xml"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

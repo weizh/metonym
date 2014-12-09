@@ -5,7 +5,7 @@ import java.io.IOException;
 import semeval.SemEval_Dataset;
 import semeval.XMLReader;
 
-public class DataStructureCreator {
+public class TrainTestDataObjectCreater {
 
 	public static void main(String argb[]) throws Exception {
 //		 create training data, and store the object

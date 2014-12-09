@@ -8,11 +8,11 @@ import java.util.HashMap;
 
 import model.FileReadDependency;
 
-public class GrammerReader {
+public class DependencyFileReader {
 
 	public static void main(String argvp[]) throws IOException{
 		
-		HashMap<String, FileReadDependency> deps = GrammerReader.readDependency("src/main/resources/countries.train.grammannot");
+		HashMap<String, FileReadDependency> deps = DependencyFileReader.readDependency("src/main/resources/countries.train.grammannot");
 		System.out.println(deps.size());
 	}
 

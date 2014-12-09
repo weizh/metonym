@@ -18,7 +18,7 @@ public class BrownCluster_Str {
 		try {
 			br = new BufferedReader(
 					new FileReader(
-							"src/main/resources/brown-rcv1.clean.tokenized-CoNLL03.txt-c100-freq1.txt"));
+							"src/main/resources/brownCluster/brown-rcv1.clean.tokenized-CoNLL03.txt-c100-freq1.txt"));
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

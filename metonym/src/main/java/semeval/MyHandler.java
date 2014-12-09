@@ -9,6 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class MyHandler extends DefaultHandler {
 
+	// This is the nice handler
 	boolean sampletexts = false;
 	boolean sample = false;
 	boolean bnc_title = false;

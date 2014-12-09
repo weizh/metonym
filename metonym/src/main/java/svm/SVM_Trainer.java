@@ -15,9 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import semeval.SemEval_Dataset;
 import libsvm.svm;
@@ -27,7 +25,6 @@ import libsvm.svm_parameter;
 import libsvm.svm_problem;
 import metoClassifier.FeatureExtractor;
 import model.Document;
-import model.Feature;
 import model.FileReadDependency;
 import model.NamedEntity;
 import model.Sentence;

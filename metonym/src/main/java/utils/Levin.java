@@ -20,7 +20,7 @@ public class Levin {
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(
-					"src/main/resources/Levin.txt"));
+					"src/main/resources/levinVerb/Levin.txt"));
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

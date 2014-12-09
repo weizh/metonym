@@ -19,7 +19,7 @@ public class Embeddings_Vec {
 	static {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader("src/main/resources/embeddings-scaled.EMBEDDING_SIZE=25.txt"));
+			br = new BufferedReader(new FileReader("src/main/resources/wordEmbedding/embeddings-scaled.EMBEDDING_SIZE=25.txt"));
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		}
