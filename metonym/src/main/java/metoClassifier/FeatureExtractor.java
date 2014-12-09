@@ -575,17 +575,17 @@ public class FeatureExtractor implements Serializable {
 			String depword = toks.length > 1 ? toks[toks.length - 1] : toks[0];
 			depword = depword.toLowerCase();
 			feature.addFeatureValue("rel_" + d.getRel());
-			feature.addFeatureValue("dep_" + depword);
-			feature.addFeatureValue("bc_"
-					+ BrownCluster_Str.getBrownClusterId(depword, 4));
-			feature.addFeatureValue("wn_"
-					+ JWNLUtils.getWordNetSenseHead(depword));
-			feature.addFeatureValue("length_" + toks.length);
-			feature.addFeatureValue(Levin.getLevinCategoryStrings(depword));
-			if (StringUtils.isPreposition(depword))
-				feature.addFeatureValue("prep_true");
-			else
-				feature.addFeatureValue("prep_false");
+//			feature.addFeatureValue("dep_" + depword);
+//			feature.addFeatureValue("bc_"
+//					+ BrownCluster_Str.getBrownClusterId(depword, 4));
+//			feature.addFeatureValue("wn_"
+//					+ JWNLUtils.getWordNetSenseHead(depword));
+//			feature.addFeatureValue("length_" + toks.length);
+//			feature.addFeatureValue(Levin.getLevinCategoryStrings(depword));
+//			if (StringUtils.isPreposition(depword))
+//				feature.addFeatureValue("prep_true");
+//			else
+//				feature.addFeatureValue("prep_false");
 		}
 	
 
@@ -597,16 +597,21 @@ public class FeatureExtractor implements Serializable {
 
 			String depword = toks.length > 1 ? toks[toks.length - 1] : toks[0];
 			depword = depword.toLowerCase();
-			String[] s = new String[] { "rel_" + d.getRel(), "dep_" + depword,
-					"bc_" + BrownCluster_Str.getBrownClusterId(depword, 4),
-					"length_" + toks.length,
-					"wn_" + JWNLUtils.getWordNetSenseHead(depword) };
-			ArrayList<String> sa = Levin.getLevinCategoryStrings(depword);
+			String[] s = new String[] { "rel_" + d.getRel()
+//					, "dep_" + depword
+			
+//					,"bc_" + BrownCluster_Str.getBrownClusterId(depword, 4),
+//					"length_" + toks.length,
+//					"wn_" + JWNLUtils.getWordNetSenseHead(depword) 
+					
+					};
+			ArrayList<String> sa =new ArrayList<String>();
 			for (String ss : s) {
 				sa.add(ss);
 			}
-			
-			sa.add(StringUtils.isPreposition(depword)?"prep_true":"prep_false");
+//			sa.addAll(Levin.getLevinCategoryStrings(depword));
+//			
+//			sa.add(StringUtils.isPreposition(depword)?"prep_true":"prep_false");
 			
 			// preposition not working
 			// if (StringUtils.isPreposition(d.getDep()))
@@ -617,7 +622,7 @@ public class FeatureExtractor implements Serializable {
 			ArrayList<svm_node> feat = feature.getSVMNodeVector(sa
 					.toArray(new String[] {}));
 
-			feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(depword));
+//			feat.addAll(Embeddings_Vec.getEmbeddingSVMNodes(depword));
 
 			features.add(feat);
 

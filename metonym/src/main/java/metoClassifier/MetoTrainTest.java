@@ -24,7 +24,7 @@ public class MetoTrainTest {
 
 		HashMap<String, FileReadDependency> trainDeps = DependencyFileReader.readDependency(trainDepName);
 		HashMap<String, FileReadDependency> testDeps = DependencyFileReader.readDependency(testDepName);
-		System.out.println("train and test dep data loaded.");
+		System.out.println("train and test dependency data loaded.");
 
 		SVM_Trainer metoModel = new SVM_Trainer(new FeatureExtractor("fileparse"));
 
