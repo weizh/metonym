@@ -33,19 +33,13 @@ public class SVM_Trainer implements Serializable {
 
 	svm_model model;
 	svm_parameter p;
-	FeatureExtractor fe;
+	
+	private final FeatureExtractor fe;
 
 	TObjectIntMap<String> labelTypes;
 	int labelId;
 	ArrayList<String> labelArray;
 
-	public FeatureExtractor getFe() {
-		return fe;
-	}
-
-	public void setFe(FeatureExtractor fe) {
-		this.fe = fe;
-	}
 
 	void setDefaultSVMParam() {
 		p = new svm_parameter();
@@ -66,9 +60,6 @@ public class SVM_Trainer implements Serializable {
 		// p.probability = 0;
 	}
 
-	public SVM_Trainer() {
-		setDefaultSVMParam();
-	}
 
 	public SVM_Trainer(FeatureExtractor featureExtractor) {
 		setDefaultSVMParam();
@@ -77,16 +68,16 @@ public class SVM_Trainer implements Serializable {
 		this.labelArray = new ArrayList<String>();
 	}
 
-	public void train(SemEval_Dataset semevaltrain) throws Exception {
+	public void train(SemEval_Dataset semevaltrain, HashMap<String, FileReadDependency> trainDeps) throws Exception {
 
 		List<String> labels = new ArrayList<String>();
 
 		TObjectIntHashMap<String> labelstat = new TObjectIntHashMap<String>();
 		// initialize features
-		fe.initialize(semevaltrain.getDocuments());
+//		fe.initialize(semevaltrain.getDocuments());
 
 		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltrain
-				.getDocuments());
+				.getDocuments(), trainDeps);
 
 		for (Document doc : semevaltrain.getDocuments()) {
 			List<Sentence> sents = doc.getParagraphs().get(0).getSentences();
@@ -133,12 +124,12 @@ public class SVM_Trainer implements Serializable {
 
 	}
 
-	public void test(SemEval_Dataset semevaltest) throws Exception {
+	public void test(SemEval_Dataset semevaltest, HashMap<String, FileReadDependency> testDeps) throws Exception {
 
 		ArrayList<Document> effectiveDoc = new ArrayList<Document>();
 
 		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltest
-				.getDocuments());
+				.getDocuments(),testDeps);
 
 		System.out.println(featureMatrix.size());
 
@@ -259,11 +250,6 @@ public class SVM_Trainer implements Serializable {
 		ObjectOutputStream out = new ObjectOutputStream(fos);
 		out.writeObject(this);
 		out.close();
-	}
-
-	public void setDeps(HashMap<String, FileReadDependency> deps) {
-		// TODO Auto-generated method stub
-		this.fe.setDeps(deps);
 	}
 
 }

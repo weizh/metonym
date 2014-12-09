@@ -15,7 +15,6 @@ public class MetoTrainer {
 		HashMap<String, FileReadDependency> deps = DependencyFileReader.readDependency("src/main/resources/trainTestData/"+data+"/"+data+".train.grammannot");
 
 		SVM_Trainer metoModel = new SVM_Trainer(new FeatureExtractor(
-				deps,
 //				"context"
 //				,
 //				"determiner"
@@ -24,7 +23,7 @@ public class MetoTrainer {
 				));
 		
 		String modelName = "src/main/resources/output/"+data+".MetoModel.-31tok.parse";
-		metoModel.train(semevaltrain);
+		metoModel.train(semevaltrain,deps);
 		metoModel.store(modelName);
 		System.out.println(modelName + " constructed.");
 

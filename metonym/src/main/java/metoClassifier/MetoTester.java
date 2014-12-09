@@ -22,7 +22,6 @@ public class MetoTester {
 		System.out.println(model + " loaded.");
 		HashMap<String, FileReadDependency> deps = DependencyFileReader
 				.readDependency("src/main/resources/trainTestData/"+data+"/"+data+".test.grammannot");
-		metoModel.setDeps(deps);
-		metoModel.test(semevaltest);
+		metoModel.test(semevaltest,deps);
 	}
 }
