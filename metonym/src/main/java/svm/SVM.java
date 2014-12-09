@@ -29,20 +29,24 @@ import model.FileReadDependency;
 import model.NamedEntity;
 import model.Sentence;
 
-public class SVM_Trainer implements Serializable {
+public class SVM implements Serializable {
 
-	svm_model model;
-	svm_parameter p;
-	
+	public  static enum TagGranularity {
+		BINARY, MEDIUM, FINE;
+	};
+
+	private final SVM.TagGranularity currentTagGranularity;
+
+	private svm_model model;
+	private final svm_parameter p = new svm_parameter();
+
 	private final FeatureExtractor fe;
 
-	TObjectIntMap<String> labelTypes;
-	int labelId;
-	ArrayList<String> labelArray;
-
+	private TObjectIntMap<String> labelTypes;
+	private int labelId;
+	private ArrayList<String> labelArray;
 
 	void setDefaultSVMParam() {
-		p = new svm_parameter();
 		p.svm_type = svm_parameter.C_SVC;
 		p.kernel_type = svm_parameter.LINEAR;
 		p.degree = 3;
@@ -60,24 +64,25 @@ public class SVM_Trainer implements Serializable {
 		// p.probability = 0;
 	}
 
-
-	public SVM_Trainer(FeatureExtractor featureExtractor) {
+	public SVM(FeatureExtractor featureExtractor, SVM.TagGranularity gran) {
 		setDefaultSVMParam();
+		this.currentTagGranularity = gran;
 		this.fe = featureExtractor;
 		this.labelTypes = new TObjectIntHashMap<String>();
 		this.labelArray = new ArrayList<String>();
 	}
 
-	public void train(SemEval_Dataset semevaltrain, HashMap<String, FileReadDependency> trainDeps) throws Exception {
+	public void train(SemEval_Dataset semevaltrain,
+			HashMap<String, FileReadDependency> trainDeps) throws Exception {
 
 		List<String> labels = new ArrayList<String>();
 
 		TObjectIntHashMap<String> labelstat = new TObjectIntHashMap<String>();
 		// initialize features
-//		fe.initialize(semevaltrain.getDocuments());
+		// fe.initialize(semevaltrain.getDocuments());
 
-		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltrain
-				.getDocuments(), trainDeps);
+		List<ArrayList<svm_node>> featureMatrix = fe.extract(
+				semevaltrain.getDocuments(), trainDeps, true);
 
 		for (Document doc : semevaltrain.getDocuments()) {
 			List<Sentence> sents = doc.getParagraphs().get(0).getSentences();
@@ -86,14 +91,9 @@ public class SVM_Trainer implements Serializable {
 				if (nes.size() != 0) {
 					for (NamedEntity ne : nes) {
 						String type = ne.getEntityType();
-									
-//						 if (!type.equalsIgnoreCase("literal"))
-//						 type = "non-literal";
-						
-//						if (!type.equalsIgnoreCase("literal")
-//								&& !type.equalsIgnoreCase("mixed"))
-//							type = "metonymic";
-						
+
+						type = convertType(type, this.currentTagGranularity);
+
 						labelstat.adjustOrPutValue(type, 1, 1);
 						labels.add(type);
 						if (!labelTypes.containsKey(type)) {
@@ -106,7 +106,7 @@ public class SVM_Trainer implements Serializable {
 			}
 		}
 		System.out.println(labelstat);
-		
+
 		svm_problem problem = new svm_problem();
 		problem.l = featureMatrix.size();
 		problem.x = new svm_node[problem.l][];
@@ -124,12 +124,13 @@ public class SVM_Trainer implements Serializable {
 
 	}
 
-	public void test(SemEval_Dataset semevaltest, HashMap<String, FileReadDependency> testDeps) throws Exception {
+	public void test(SemEval_Dataset semevaltest,
+			HashMap<String, FileReadDependency> testDeps) throws Exception {
 
 		ArrayList<Document> effectiveDoc = new ArrayList<Document>();
 
-		List<ArrayList<svm_node>> featureMatrix = fe.extract(semevaltest
-				.getDocuments(),testDeps);
+		List<ArrayList<svm_node>> featureMatrix = fe.extract(
+				semevaltest.getDocuments(), testDeps, false);
 
 		System.out.println(featureMatrix.size());
 
@@ -142,12 +143,7 @@ public class SVM_Trainer implements Serializable {
 				if (sent.getEntities().size() != 0) {
 					String type = sent.getEntities().get(0).getEntityType();
 
-//					 if (!type.equalsIgnoreCase("literal"))
-//					 type = "non-literal";
-//
-//					 if (!type.equalsIgnoreCase("literal")
-//					 && !type.equalsIgnoreCase("mixed"))
-//					 type = "metonymic";
+					type = convertType(type, this.currentTagGranularity);
 
 					labels.add(type);
 					hasNE = true;
@@ -168,8 +164,24 @@ public class SVM_Trainer implements Serializable {
 			predictions.add(labelArray.get((int) label));
 		}
 
-		System.out.println(predictions.size());
+		// System.out.println(predictions.size());
 		evaluate(labels, predictions, effectiveDoc);
+	}
+
+	private String convertType(String type, TagGranularity gran) {
+		if (type.equalsIgnoreCase("mixed"))
+			if (gran == TagGranularity.BINARY)
+				return "metonym";
+			else
+				return type;
+		else if (type.equalsIgnoreCase("literal"))
+			return type;
+		else {
+			if (gran == TagGranularity.FINE)
+				return type;
+			else
+				return "metonym";
+		}
 	}
 
 	private void evaluate(ArrayList<String> labels,
@@ -178,7 +190,7 @@ public class SVM_Trainer implements Serializable {
 		TObjectDoubleHashMap<String> total = new TObjectDoubleHashMap<String>();
 		TObjectDoubleHashMap<String> pred = new TObjectDoubleHashMap<String>();
 		TObjectDoubleHashMap<String> correct = new TObjectDoubleHashMap<String>();
-		HashSet<String> met2Lit= new HashSet<String>();
+		HashSet<String> met2Lit = new HashSet<String>();
 		HashSet<String> lit2Met = new HashSet<String>();
 
 		double Total = labels.size(), Correct = 0;
@@ -192,9 +204,10 @@ public class SVM_Trainer implements Serializable {
 			} else {
 				if (labels.get(i).equals("literal"))
 					lit2Met.add(docs.get(i).getDocId());
-				if (labels.get(i).startsWith("p")|| labels.get(i).startsWith("o"))
+				if (labels.get(i).startsWith("p")
+						|| labels.get(i).startsWith("o"))
 					met2Lit.add(docs.get(i).getDocId());
-				
+
 				List<Sentence> sents = docs.get(i).getParagraphs().get(0)
 						.getSentences();
 				for (Sentence sent : sents) {
@@ -214,7 +227,7 @@ public class SVM_Trainer implements Serializable {
 		}
 		System.out.println(total);
 
-		System.out.println("TOTAL:" + Correct / Total +" ");
+		System.out.println("TOTAL:" + Correct / Total + " ");
 		TObjectDoubleIterator<String> i = total.iterator();
 		while (i.hasNext()) {
 			i.advance();
@@ -222,24 +235,26 @@ public class SVM_Trainer implements Serializable {
 			Double t = i.value();
 			Double c = correct.get(n);
 			Double p = pred.get(n);
-			System.out.printf(n + ": precision: %f, recall: %f, F1: %f, c: %f, p: %f, t %f \n", c
-					/ p, c / t, 2 * c / (p + t), c, p,t);
+			System.out
+					.printf(n
+							+ ": precision: %f, recall: %f, F1: %f, c: %f, p: %f, t %f \n",
+							c / p, c / t, 2 * c / (p + t), c, p, t);
 		}
 		ArrayList<String> met2litarray = new ArrayList<String>(met2Lit);
 		Collections.sort(met2litarray);
 		System.out.println(met2litarray);
-		
+
 		ArrayList<String> lit2metarray = new ArrayList<String>(lit2Met);
 		Collections.sort(lit2metarray);
 		System.out.println(lit2metarray);
 
 	}
 
-	public static SVM_Trainer load(String file) throws IOException,
+	public static SVM load(String file) throws IOException,
 			ClassNotFoundException {
 		FileInputStream in = new FileInputStream(file);
 		ObjectInputStream ins = new ObjectInputStream(in);
-		SVM_Trainer copy = (SVM_Trainer) ins.readObject();
+		SVM copy = (SVM) ins.readObject();
 		in.close();
 		ins.close();
 		return copy;

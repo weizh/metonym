@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import model.FileReadDependency;
 import semeval.SemEval_Dataset;
-import svm.SVM_Trainer;
+import svm.SVM;
 
 public class MetoTrainTest {
 
@@ -26,7 +26,8 @@ public class MetoTrainTest {
 		HashMap<String, FileReadDependency> testDeps = DependencyFileReader.readDependency(testDepName);
 		System.out.println("train and test dependency data loaded.");
 
-		SVM_Trainer metoModel = new SVM_Trainer(new FeatureExtractor("fileparse"));
+		
+		SVM metoModel = new SVM(new FeatureExtractor("fileparse"), SVM.TagGranularity.MEDIUM);
 
 		metoModel.train(semevaltrain, trainDeps);
 		// metoModel.store(modelName);
